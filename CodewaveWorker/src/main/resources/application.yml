@@ -1,0 +1,10 @@
+server:
+  port: 7999
+  address: localhost
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/codewavedb2?serverTimezone=GMT%2B8&characterEncoding=utf8&useSSL=false
+    username: root
+    password: root
