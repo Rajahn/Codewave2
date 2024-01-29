@@ -1,4 +1,4 @@
-package edu.vt.ranhuo.codewavecommon.model.common;
+package edu.vt.ranhuo.codewavecommon.common;
 
 import lombok.Data;
 

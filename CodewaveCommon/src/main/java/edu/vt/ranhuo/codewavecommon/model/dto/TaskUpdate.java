@@ -1,4 +1,4 @@
-package edu.vt.ranhuo.codewaveserver.model.dto;
+package edu.vt.ranhuo.codewavecommon.model.dto;
 
 import lombok.Data;
 

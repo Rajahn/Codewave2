@@ -1,4 +1,4 @@
-package edu.vt.ranhuo.codewaveserver.utils;
+package edu.vt.ranhuo.codewavecommon.utils;
 
 import org.springframework.beans.BeanUtils;
 

@@ -1,4 +1,4 @@
-package edu.vt.codewaveservice.config;
+package edu.vt.ranhuo.codewaveserver.config;
 
 import lombok.Data;
 import org.redisson.Redisson;
