@@ -3,6 +3,7 @@ package edu.vt.ranhuo.codewaveserver.config;
 import lombok.Data;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
+import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.config.Config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +25,8 @@ public class RedissionConfig {
     @Bean
     public RedissonClient redissonClient() {
         Config config = new Config();
-        config.useSingleServer()
+        config.setCodec(new JsonJacksonCodec())
+                .useSingleServer()
                 .setDatabase(database)
                 .setAddress("redis://" + host + ":" + port);
         RedissonClient redisson = Redisson.create(config);

@@ -2,6 +2,10 @@ package edu.vt.ranhuo.codewaveserver.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import edu.vt.ranhuo.asynccore.enums.QueueType;
+import edu.vt.ranhuo.asyncmaster.context.IMaster;
 import edu.vt.ranhuo.codewavecommon.common.ErrorCode;
 import edu.vt.ranhuo.codewavecommon.model.dto.TaskUpdate;
 import edu.vt.ranhuo.codewavecommon.model.entity.Task;
@@ -11,28 +15,97 @@ import edu.vt.ranhuo.codewaveserver.service.TaskService;
 import edu.vt.ranhuo.codewaveserver.mapper.TaskMapper;
 import edu.vt.ranhuo.codewavecommon.utils.BeanCopyUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RAtomicLong;
 import org.redisson.api.RBucket;
 import org.redisson.api.RLock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.redisson.api.RedissonClient;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
-* @author yukun
-* @description 针对表【task】的数据库操作Service实现
-* @createDate 2024-01-16 13:43:00
-*/
+ * @author yukun
+ * @description 针对表【task】的数据库操作Service实现
+ * @createDate 2024-01-16 13:43:00
+ */
 @Service
 @Slf4j
 public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task>
-    implements TaskService{
+        implements TaskService {
+
+    private Gson gson = new Gson();
+
+    @Autowired
+    private IMaster<String> master;
+
     @Autowired
     private TaskMapper taskMapper;
 
     @Autowired
     private RedissonClient redissonClient;
+
+    @Scheduled(fixedRate = 5000) //
+    public void sendTaskToRedis() {
+        int curRedayTask = master.getQueueSize(QueueType.HIGN);
+        int slaveNodeNum = master.getActiveNodeInfo().size() - 1;
+
+        QueryWrapper<Task> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("status", "ready");
+        List<Task> taskList = taskMapper.selectList(queryWrapper);
+        log.info("curReady num is :{}, slaveNode num is :{}  taskList: {}", curRedayTask, slaveNodeNum, taskList);
+        for (int i = 0; i < slaveNodeNum*2 - curRedayTask && i < taskList.size(); i++) {
+
+            Task task = taskList.get(i);
+            task.setOrder_time(System.currentTimeMillis());
+            task.setStatus("running");
+            taskMapper.updateById(task);
+            String taskstr = gson.toJson(task);
+            master.send(QueueType.HIGN, task.getOrder_time(), taskstr);
+            log.info("send task to redis: {}", taskstr);
+        }
+    }
+
+    @Scheduled(fixedRate = 5000)
+    public void commitTask(){
+        Optional<TaskUpdate> result = master.consume().map(value -> {
+            String content = value;
+            //log.warn("poll content: {}", content);
+            try {
+                return gson.fromJson(content, TaskUpdate.class);
+            } catch (JsonSyntaxException e) {
+                log.error("JSON parsing error", e);
+                return null;
+            }
+        });
+
+        result.ifPresent(taskUpdate -> {
+            log.info("taskUpdate is {}", taskUpdate);
+            Task task = BeanCopyUtils.copyBean(taskUpdate, Task.class);
+            task.setStatus("finished");
+            taskMapper.updateById(task);
+            master.commit(gson.toJson(taskUpdate));
+            markTaskAsFinished(task.getJob_id());
+        });
+    }
+
+    public void markTaskAsFinished(String jobId) {
+        RAtomicLong tasksCount = redissonClient.getAtomicLong("job:" + jobId + ":tasksCount");
+        log.warn("job {} finished, tasksCount: {}", jobId, tasksCount);
+        if (tasksCount.decrementAndGet() == 0) {
+            // 所有任务都完成了
+            handleAllTasksFinished(jobId);
+        }
+    }
+
+    private void handleAllTasksFinished(String jobId) {
+        // 执行 job 完成后的逻辑
+        log.warn("all job {} finished", jobId);
+    }
+
     @Override
     public BaseResponse assignTask() {
         RLock lock = redissonClient.getLock("taskLock");
@@ -42,7 +115,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task>
             boolean isLocked = lock.tryLock(5, 3, TimeUnit.SECONDS);
             if (!isLocked) {
                 log.info("获取锁失败");
-                return  ResultUtils.success(task);
+                return ResultUtils.success(task);
             }
 
             // 执行任务分配逻辑
@@ -73,7 +146,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task>
 
     @Override
     public BaseResponse updateTask(TaskUpdate taskUpdate) {
-        Task task = BeanCopyUtils.copyBean(taskUpdate,Task.class);
+        Task task = BeanCopyUtils.copyBean(taskUpdate, Task.class);
         int id = taskMapper.updateById(task);
         return ResultUtils.success(id);
     }

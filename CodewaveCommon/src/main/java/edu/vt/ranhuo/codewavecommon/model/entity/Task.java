@@ -25,7 +25,7 @@ public class Task implements Serializable {
     /**
      * 
      */
-    private Integer job_id;
+    private String job_id;
 
     /**
      * 

@@ -5,26 +5,28 @@
 <mapper namespace="edu.vt.ranhuo.codewaveserver.mapper.JobMapper">
 
     <resultMap id="BaseResultMap" type="edu.vt.ranhuo.codewavecommon.model.entity.Job">
-            <id property="id" column="id" jdbcType="INTEGER"/>
-            <result property="user_id" column="user_id" jdbcType="INTEGER"/>
-            <result property="job_type" column="job_type" jdbcType="VARCHAR"/>
-            <result property="job_input" column="job_input" jdbcType="VARCHAR"/>
-            <result property="job_result" column="job_result" jdbcType="VARCHAR"/>
-            <result property="job_metainfo" column="job_metainfo" jdbcType="VARCHAR"/>
-            <result property="sub_task_num" column="sub_task_num" jdbcType="INTEGER"/>
-            <result property="sub_task_finished_num" column="sub_task_finished_num" jdbcType="INTEGER"/>
-            <result property="priority" column="priority" jdbcType="INTEGER"/>
-            <result property="status" column="status" jdbcType="VARCHAR"/>
-            <result property="stages_num" column="stages_num" jdbcType="INTEGER"/>
-            <result property="create_time" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="update_time" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="retry_num" column="retry_num" jdbcType="INTEGER"/>
-            <result property="max_retry_num" column="max_retry_num" jdbcType="INTEGER"/>
-            <result property="max_retry_interval" column="max_retry_interval" jdbcType="INTEGER"/>
+        <id property="id" column="id" jdbcType="INTEGER"/>
+        <result property="user_id" column="user_id" jdbcType="INTEGER"/>
+        <result property="job_id" column="job_id" jdbcType="VARCHAR"/>
+        <result property="job_type" column="job_type" jdbcType="VARCHAR"/>
+        <result property="job_input" column="job_input" jdbcType="VARCHAR"/>
+        <result property="job_result" column="job_result" jdbcType="VARCHAR"/>
+        <result property="job_metainfo" column="job_metainfo" jdbcType="VARCHAR"/>
+        <result property="sub_task_num" column="sub_task_num" jdbcType="INTEGER"/>
+        <result property="sub_task_finished_num" column="sub_task_finished_num" jdbcType="INTEGER"/>
+        <result property="priority" column="priority" jdbcType="INTEGER"/>
+        <result property="status" column="status" jdbcType="VARCHAR"/>
+        <result property="stages_num" column="stages_num" jdbcType="INTEGER"/>
+        <result property="create_time" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="update_time" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="retry_num" column="retry_num" jdbcType="INTEGER"/>
+        <result property="max_retry_num" column="max_retry_num" jdbcType="INTEGER"/>
+        <result property="max_retry_interval" column="max_retry_interval" jdbcType="INTEGER"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,user_id,job_type,
+        id
+        ,job_id,user_id,job_type,
         job_input,job_result,job_metainfo,
         sub_task_num,sub_task_finished_num,priority,
         status,stages_num,create_time,

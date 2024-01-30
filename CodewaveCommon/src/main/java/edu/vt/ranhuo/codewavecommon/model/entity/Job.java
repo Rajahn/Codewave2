@@ -22,6 +22,8 @@ public class Job implements Serializable {
     @TableId(type = IdType.AUTO)
     private Integer id;
 
+    private String job_id;
+
     /**
      * 
      */

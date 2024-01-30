@@ -73,7 +73,7 @@ public class TextToSoundTaskService implements TaskCallback {
         long timestamp = System.currentTimeMillis();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String res = simpleDateFormat.format(new Date(timestamp));
-
+        res = "haha "+res;
         TaskUpdate tu = BeanCopyUtils.copyBean(task, TaskUpdate.class);
         tu.setTask_result(res);
         tu.setId(task.getId());
@@ -85,24 +85,10 @@ public class TextToSoundTaskService implements TaskCallback {
 
     @Override
     public void onPostTaskUpdate(Task task, TaskUpdate taskUpdate) {
-//          String originStr = gson.toJson(task);
-//          String updateStr = gson.toJson(taskUpdate);
-//          slave.commit(updateStr,originStr);
-//          log.info("commit task update is {}", taskUpdate);
-
-        MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-        String json = gson.toJson(taskUpdate);
-        RequestBody body = RequestBody.create(JSON, json);
-        Request request = new Request.Builder()
-                .url("http://localhost:8081/task/updateTask")
-                .post(body)
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            // 处理响应
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+          String originStr = gson.toJson(task);
+          String updateStr = gson.toJson(taskUpdate);
+          slave.commit(updateStr,originStr);
+          log.info("commit task update is {}", taskUpdate);
     }
 
     @Override

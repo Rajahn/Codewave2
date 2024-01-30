@@ -3,7 +3,7 @@ server:
   address: localhost
 logging:
   level:
-    root: INFO
+    com.baomidou.mybatisplus: DEBUG
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -11,7 +11,7 @@ spring:
     username: root
     password: root
   redis:
-    database: 1
+    database: 0
     host: localhost
     port: 6379
     timeout: 5000
