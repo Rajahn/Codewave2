@@ -22,34 +22,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
+import static edu.vt.ranhuo.codewaveworker.tts.OpenaiModel.textToSpeech;
+
 @Service
 @Slf4j
 public class TextToSoundTaskService implements TaskCallback {
 
     private OkHttpClient client = new OkHttpClient();
     private Gson gson = new Gson();
-
-
-//    @Override
-//    public Task onPollTask() {
-//        Task task = null;
-//        Request request = new Request.Builder()
-//                .url("http://localhost:8081/task/requireTask")
-//                .build();
-//
-//        try (Response response = client.newCall(request).execute()) {
-//            if (response.isSuccessful() && response.body() != null) {
-//                String responseBody = response.body().string();
-//                BaseResponse baseResponse = gson.fromJson(responseBody, BaseResponse.class);
-//                if (baseResponse != null && baseResponse.getData() != null) {
-//                    task = gson.fromJson(gson.toJson(baseResponse.getData()), Task.class);
-//                }
-//            }
-//        }catch (Exception e){
-//            e.printStackTrace();
-//        }
-//        return task;
-//    }
 
     @Override
     public Task onPollTask() {
@@ -70,11 +50,13 @@ public class TextToSoundTaskService implements TaskCallback {
 
     @Override
     public TaskUpdate onProcessingTask(Task task) {
-        long timestamp = System.currentTimeMillis();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String res = simpleDateFormat.format(new Date(timestamp));
-        res = "haha "+res;
+//        long timestamp = System.currentTimeMillis();
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        String res = simpleDateFormat.format(new Date(timestamp));
+//        res = "haha "+res;
+        String res =  textToSpeech(task.getTask_input());
         TaskUpdate tu = BeanCopyUtils.copyBean(task, TaskUpdate.class);
+        tu.setJob_id(task.getJob_id());
         tu.setTask_result(res);
         tu.setId(task.getId());
         tu.setStatus("finished");

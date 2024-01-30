@@ -7,4 +7,5 @@ public class TaskUpdate {
     private Integer id;
     private String task_result;
     private String status;
+    private String job_id;
 }

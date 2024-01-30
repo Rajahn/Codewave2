@@ -60,13 +60,35 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job>
     public static List<String> splitStringIntoSegments(String s, int len) {
         List<String> segments = new ArrayList<>();
         int start = 0;
+
         while (start < s.length()) {
             int end = Math.min(start + len, s.length());
+
+            // 如果不是字符串的结尾并且下一个字符不是空格或标点符号
+            while (end < s.length() && !Character.isWhitespace(s.charAt(end)) && !isPunctuation(s.charAt(end))) {
+                end--;
+            }
+
+            // 如果没有找到合适的分割点，则继续向后直到下一个空格或标点符号
+            if (end == start) {
+                end = start + len;
+                while (end < s.length() && !Character.isWhitespace(s.charAt(end)) && !isPunctuation(s.charAt(end))) {
+                    end++;
+                }
+            }
+
             segments.add(s.substring(start, end));
-            start = end;
+            start = end + 1; // 跳过分割点的空格或标点符号
         }
+
         return segments;
     }
+
+    // 检查字符是否是标点符号
+    private static boolean isPunctuation(char c) {
+        return !Character.isLetterOrDigit(c);
+    }
+
 }
 
 

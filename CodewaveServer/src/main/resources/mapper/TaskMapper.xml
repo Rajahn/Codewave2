@@ -24,9 +24,10 @@
         update_time,order_time,retry_num,
         max_retry_num,max_retry_interval
     </sql>
-    <select id="selectByTaskId" resultType="edu.vt.ranhuo.codewavecommon.model.entity.Task">
+
+    <select id="selectByTaskId" resultMap="BaseResultMap">
         select
-        <include refid="Base_Column_List"/>
+        *
         from task
         where id = #{id,jdbcType=INTEGER}
     </select>

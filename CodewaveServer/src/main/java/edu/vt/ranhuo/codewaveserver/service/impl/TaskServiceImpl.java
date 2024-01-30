@@ -11,6 +11,7 @@ import edu.vt.ranhuo.codewavecommon.model.dto.TaskUpdate;
 import edu.vt.ranhuo.codewavecommon.model.entity.Task;
 import edu.vt.ranhuo.codewavecommon.common.BaseResponse;
 import edu.vt.ranhuo.codewavecommon.common.ResultUtils;
+import edu.vt.ranhuo.codewavecommon.utils.S3Utils;
 import edu.vt.ranhuo.codewaveserver.service.TaskService;
 import edu.vt.ranhuo.codewaveserver.mapper.TaskMapper;
 import edu.vt.ranhuo.codewavecommon.utils.BeanCopyUtils;
@@ -23,6 +24,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.redisson.api.RedissonClient;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -98,12 +107,73 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task>
         if (tasksCount.decrementAndGet() == 0) {
             // 所有任务都完成了
             handleAllTasksFinished(jobId);
+            tasksCount.delete();
         }
     }
 
     private void handleAllTasksFinished(String jobId) {
         // 执行 job 完成后的逻辑
-        log.warn("all job {} finished", jobId);
+        log.warn("all job {} finished,combain result and update job table", jobId);
+        QueryWrapper<Task> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("job_id", jobId);
+        queryWrapper.orderByAsc("id");
+        List<Task> taskList = taskMapper.selectList(queryWrapper);
+
+        if (taskList.isEmpty()) {
+            System.out.println("No tasks found for job_id");
+            return;
+        }
+
+        String directoryPath = System.getProperty("java.io.tmpdir"); // 使用系统临时目录
+        String fileName = jobId + ".mp3";
+        Path filePath = Paths.get(directoryPath, fileName);
+
+        try {
+            Files.createDirectories(filePath.getParent()); // 确保目录存在
+
+            String result = combineTaskResults(taskList); // 假设这个方法组合所有任务的结果
+            byte[] audioByte = Base64.getDecoder().decode(result);
+
+            try (FileOutputStream outputStream = new FileOutputStream(filePath.toFile())) {
+                outputStream.write(audioByte);
+                System.out.println("Audio file written to: " + filePath);
+            }
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid Base64 encoding: " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error writing audio file: " + e.getMessage());
+        }
+
+        S3Utils s3Utils = new S3Utils();
+        String presignedUrl = s3Utils.uploadFile(String.valueOf(filePath), fileName);
+        log.warn("Presigned URL: " + presignedUrl);
+
+        boolean isDeleted = deleteTempFile(String.valueOf(filePath));
+        if (isDeleted) {
+            System.out.println("Temp file deleted successfully.");
+        } else {
+            System.out.println("Failed to delete temp file.");
+        }
+    }
+
+    public boolean deleteTempFile(String filePath) {
+        File file = new File(filePath);
+        if (file.exists()) {
+            return file.delete(); // 尝试删除文件，成功时返回 true
+        } else {
+            System.out.println("File not found: " + filePath);
+            return false;
+        }
+    }
+
+
+    private String combineTaskResults(List<Task> taskList) {
+        String result = "";
+        for (Task task : taskList) {
+            // 这里假设 task.getTask_result() 返回有效的 Base64 编码字符串
+            result += task.getTask_result();
+        }
+        return result;
     }
 
     @Override

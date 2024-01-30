@@ -25,6 +25,7 @@ public class Task implements Serializable {
     /**
      * 
      */
+    @TableField("job_id")
     private String job_id;
 
     /**
